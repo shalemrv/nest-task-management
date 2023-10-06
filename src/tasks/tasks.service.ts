@@ -76,7 +76,7 @@ export class TasksService {
 
     async updateTask(id: number, updateTaskDto: UpdateTaskDto) : Promise<Task> {
 
-        const task = await this.taskRepository.findOneBy({ id });
+        const task = await this.showTask(id);
 
         if (!task) 
             throw new NotFoundException('No such task.');

@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
-import { TasksModule } from './tasks/tasks.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { AuthModule } from './auth/auth.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
 	imports: [
+		AuthModule,
 		TasksModule,
 		TypeOrmModule.forRoot({
 			type: 'mysql',
@@ -14,9 +16,8 @@ import { AuthModule } from './auth/auth.module';
 			database: 'task-management',
 			autoLoadEntities: true,
 			synchronize: true,
-			logging: false
-		}),
-		AuthModule
+			logging: true
+		})
 	],
 	controllers: [],
 	providers: [],
