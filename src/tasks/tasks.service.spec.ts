@@ -91,9 +91,7 @@ describe('Task Service', () => {
 
                 jest.spyOn(tasksRepository, 'findOneBy').mockResolvedValue(mockUserTasks[0]);
 
-                const result = await tasksService.showTask(2, mockUser);
-
-                expect(result).toEqual(mockUserTasks[0]);
+                expect(await tasksService.showTask(2, mockUser)).toEqual(mockUserTasks[0]);
             }
         );
 
@@ -106,5 +104,5 @@ describe('Task Service', () => {
                 expect(tasksService.showTask(99, mockUsers[0])).rejects.toThrow(NotFoundException);
             }
         );
-    })
+    });
 });

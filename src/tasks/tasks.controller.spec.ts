@@ -1,4 +1,5 @@
 import { Test } from "@nestjs/testing";
+import { NotFoundException } from '@nestjs/common';
 
 import { TasksController } from "./tasks.controller";
 import { TasksService } from "./tasks.service";
@@ -7,6 +8,8 @@ import { User } from "../typeorm/entities/user.entity";
 import { Task } from "../typeorm/entities/task.entity";
 
 import { TaskStatus } from "../models/task-status.enum";
+import { CreateTaskDto } from "./dto/create-task.dto";
+import { UpdateTaskDto } from "./dto/update-task.dto";
 
 const mockUsers: User[] = [
     {
@@ -17,7 +20,7 @@ const mockUsers: User[] = [
     },
     {
         id: 42,
-        username: 'Shalem',
+        username: 'Rathna Raj',
         password: 'Something@321',
         tasks: []
     },
@@ -42,7 +45,10 @@ const mockTasks: Task[] = [
 
 const mockTasksService = () => ({
     getTasks: jest.fn(),
-    findOneBy: jest.fn()
+    showTask: jest.fn(),
+    createTask: jest.fn(),
+    updateTask: jest.fn(),
+    deleteTask: jest.fn(),
 });
 
 describe('TasksConstroller', () => {
@@ -77,17 +83,78 @@ describe('TasksConstroller', () => {
         );
     });
 
-    // describe('store', () => {
-    //     it(
-    //         'should store new tasks of a user',
-    //         async () => {
-    //             const mockUser = mockUsers[0];
-    //             const mockUserTasks = mockTasks.filter(task => task.user === mockUser);
+    describe('show', () => {
+        it(
+            'calls tasksService.showTask and return Task',
+            async () => {
 
-    //             jest.spyOn(tasksService, 'getTasks').mockResolvedValue(mockUserTasks[0]);
+                const mockUser = mockUsers[1];
+                const mockUserTasks = mockTasks.filter(task => task.user === mockUser);
 
-    //             expect(await tasksController.index(null, mockUser)).toBe(mockUserTasks[0]);
-    //         }
-    //     );
-    // });
+                jest.spyOn(tasksService, 'showTask').mockResolvedValue(mockUserTasks[0]);
+                
+                expect(await tasksController.show(2, mockUser)).toEqual(mockUserTasks[0]);
+            }
+        );
+
+        it(
+            'calls tasksService.showTask and handles an error',
+            async () => {
+
+                jest.spyOn(tasksService, 'showTask').mockRejectedValue(new NotFoundException);
+                
+                expect(tasksController.show(99, mockUsers[0])).rejects.toThrow(NotFoundException);
+            }
+        );
+    });
+
+    describe('store', () => {
+        it(
+            'should store new tasks of a user',
+            async () => {
+                const mockUser = mockUsers[0];
+                const mockNewTaskDto: CreateTaskDto = {
+                    title: 'Do Something new',
+                    description: 'Just do it'
+                };
+
+                jest.spyOn(tasksService, 'createTask').mockResolvedValue(mockTasks[0]);
+
+                expect(await tasksController.store(mockNewTaskDto, mockUser)).toBe(mockTasks[0]);
+            }
+        );
+    });
+
+    describe('update', () => {
+        it(
+            'should update existing task of a user',
+            async () => {
+                const mockUser = mockUsers[0];
+                const mockUpdateTaskDto: UpdateTaskDto = {
+                    title: 'Do Something new',
+                    description: 'Just do it',
+                    status: TaskStatus.DONE
+                };
+
+                jest.spyOn(tasksService, 'updateTask').mockResolvedValue(mockTasks[0]);
+
+                expect(await tasksController.update(41, mockUpdateTaskDto, mockUser)).toBe(mockTasks[0]);
+            }
+        );
+    });
+
+    describe('delete', () => {
+        it(
+            'should delete existing task of a user',
+            async () => {
+                const mockUser = mockUsers[0];
+                const deleteTaskId = 1;
+
+                jest.spyOn(tasksService, 'deleteTask').mockResolvedValue(true);
+
+                expect(await tasksController.delete(deleteTaskId, mockUser)).toBe(`Successfully deleted task with ID - ${deleteTaskId}.`);
+            }
+        );
+    });
+
 });
