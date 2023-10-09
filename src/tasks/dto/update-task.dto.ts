@@ -1,4 +1,4 @@
-import { TaskStatus } from "src/models/task-status.enum";
+import { TaskStatus } from "../../models/task-status.enum";
 import { IsNotEmpty, IsEnum } from "class-validator";
 export class UpdateTaskDto {
 

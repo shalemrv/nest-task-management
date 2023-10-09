@@ -1,72 +1,85 @@
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 
 import { TasksRepository } from '../typeorm/repositories/tasks.repository';
 
-import { Task } from 'src/typeorm/entities/task.entity';
-import { TaskStatus } from 'src/models/task-status.enum';
+import { Task } from '../typeorm/entities/task.entity';
+import { TaskStatus } from '../models/task-status.enum';
 
-import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
-import { UpdateTaskDto } from 'src/tasks/dto/update-task.dto';
-import { GetTasksFilterDto } from 'src/tasks/dto/get-tasks-filter.dto';
+import { CreateTaskDto } from '../tasks/dto/create-task.dto';
+import { UpdateTaskDto } from '../tasks/dto/update-task.dto';
+import { GetTasksFilterDto } from '../tasks/dto/get-tasks-filter.dto';
+import { User } from '../typeorm/entities/user.entity';
 
 @Injectable()
 export class TasksService {
     
+    private logger = new Logger('TasksService', { timestamp: true });
+
     constructor(
-        @InjectRepository(TasksRepository) private taskRepository: Repository<Task>
+        @InjectRepository(TasksRepository) private tasksRepository: TasksRepository
     ) {}
 
     /**************************/
     // PUBLIC
     /**************************/
 
-    async allTasks(): Promise<Task[]> {
-        return await this.taskRepository.find();
+    async getTasks(filterDto: GetTasksFilterDto, user: User): Promise<Task[]> {
+        return await this.tasksRepository.getTasks(filterDto, user);
     }
 
-    async searchTasks(filterDto: GetTasksFilterDto): Promise<Task[]> {
-        let {search, status} = filterDto;
+    // async allTasks(user: User): Promise<Task[]> {
+    //     return await this.tasksRepository.find({
+    //         where: { user }
+    //     });
+    // }
 
-        search = search? '%' + search + '%' : null;
-        status = status ?? null;
+    // async searchTasks(filterDto: GetTasksFilterDto, user: User): Promise<Task[]> {
+    //     let {search, status} = filterDto;
 
-        const filteredTasks = this.taskRepository.createQueryBuilder('task');
-
+    //     search = search? '%' + search + '%' : null;
+    //     status = status ?? null;
         
-        if (status)
-            filteredTasks.andWhere(
-                'status = :status',
-                { status }
-            );
+    //     const filteredTasks = this.tasksRepository.createQueryBuilder('task');
 
-        if (search)
-            filteredTasks.andWhere(
-                'task.title LIKE :search OR task.description LIKE :search',
-                { search }
-            );
+    //     filteredTasks.where({ user });
         
-        return await filteredTasks.getMany();
-    }
+    //     if (status)
+    //         filteredTasks.andWhere(
+    //             'status = :status',
+    //             { status }
+    //         );
 
-    async showTask(id: number): Promise<Task> {
+    //     if (search)
+    //         filteredTasks.andWhere(
+    //             'task.title LIKE :search OR task.description LIKE :search',
+    //             { search }
+    //         );
+        
+    //     return await filteredTasks.getMany();
+    // }
 
-        const task = await this.taskRepository.findOneBy({ id });
+    async showTask(id: number, user: User): Promise<Task> {
+
+        const task = await this.tasksRepository.findOneBy({ id, user });
 
         if(!task) 
-            throw new NotFoundException('No such task');
+            throw new NotFoundException(`No such task with ID - ${id}.`);
 
         return task;
     }
 
-    async createTask(createTaskDto: CreateTaskDto) : Promise<Task> {
-        const task = this.taskRepository.create({
+    async createTask(
+        createTaskDto: CreateTaskDto,
+        user: User
+    ) : Promise<Task> {
+        const task = this.tasksRepository.create({
+            user,
             ...createTaskDto,
             status: TaskStatus.OPEN
         });
         
-        const saved = await this.taskRepository.save(task);
+        const saved = await this.tasksRepository.save(task);
 
         if (!saved)
             throw new BadRequestException('Unable to Add task.');
@@ -74,12 +87,13 @@ export class TasksService {
         return task;
     }
 
-    async updateTask(id: number, updateTaskDto: UpdateTaskDto) : Promise<Task> {
+    async updateTask(
+        id: number,
+        updateTaskDto: UpdateTaskDto,
+        user: User
+    ) : Promise<Task> {
 
-        const task = await this.showTask(id);
-
-        if (!task) 
-            throw new NotFoundException('No such task.');
+        const task = await this.showTask(id, user);
     
         const { title, description, status } = updateTaskDto; 
         
@@ -87,7 +101,7 @@ export class TasksService {
         task.description =  description;
         task.status =  status;
 
-        const saved = await this.taskRepository.save(task);
+        const saved = await this.tasksRepository.save(task);
         
         if(!saved)
             throw new BadRequestException('Unable to Update task.');
@@ -95,9 +109,9 @@ export class TasksService {
         return task;
     }
 
-    async deleteTask(id: number): Promise<boolean> {
+    async deleteTask(id: number, user: User): Promise<boolean> {
 
-        const deletion = await this.taskRepository.delete({ id });
+        const deletion = await this.tasksRepository.delete({ id, user });
 
         if (!deletion || deletion.affected === 0)
             throw new NotFoundException(`No such task with ID - ${id}.`);
@@ -180,7 +194,7 @@ export class TasksService {
     //     })
 
     //     if (index === -1) 
-    //         throw new NotFoundException('No such task');
+    //         throw new NotFoundException(`No such task with ID - ${id}.`);
 
     //     return [index, filteredTasks[0]];
     // }

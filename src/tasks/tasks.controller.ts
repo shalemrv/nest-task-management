@@ -1,44 +1,61 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UnprocessableEntityException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UnprocessableEntityException, UseGuards, Logger } from '@nestjs/common';
+import { GetUser } from '../auth/get-user.decorator';
 import { TasksService } from './tasks.service';
-import { Task } from 'src/typeorm/entities/task.entity';
-import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
-import { UpdateTaskDto } from 'src/tasks/dto/update-task.dto';
-import { GetTasksFilterDto } from 'src/tasks/dto/get-tasks-filter.dto';
+import { Task } from '../typeorm/entities/task.entity';
+import { CreateTaskDto } from '../tasks/dto/create-task.dto';
+import { UpdateTaskDto } from '../tasks/dto/update-task.dto';
+import { GetTasksFilterDto } from '../tasks/dto/get-tasks-filter.dto';
+import { User } from '../typeorm/entities/user.entity';
+
+import { AuthGuard } from '@nestjs/passport'
 
 @Controller('tasks')
+@UseGuards(AuthGuard('jwt'))
 export class TasksController {
+
+    private logger = new Logger('TasksController', { timestamp: true });
 
     constructor(private tasksService: TasksService) {}
 
     @Get('/')
-    public index(@Query() filterDto: GetTasksFilterDto) : Promise<Task[]> {
-
-        if (Object.keys(filterDto).length > 0)
-            return this.tasksService.searchTasks(filterDto);
-
-        return this.tasksService.allTasks();
+    public index(
+        @Query() filterDto: GetTasksFilterDto,
+        @GetUser() user: User
+    ) : Promise<Task[]> {
+        return this.tasksService.getTasks(filterDto, user);
     }
 
     @Get('/:taskId')
-    show(@Param('taskId') taskId: number): Promise<Task> {
-        return this.tasksService.showTask(taskId);
+    show(
+        @Param('taskId') taskId: number,
+        @GetUser() user: User
+    ): Promise<Task> {
+        return this.tasksService.showTask(taskId, user);
     }
 
     @Post('/')
     store(
-        @Body() createTaskDto: CreateTaskDto
+        @Body() createTaskDto: CreateTaskDto,
+        @GetUser() user: User
     ): Promise<Task> {
-        return this.tasksService.createTask(createTaskDto);
+        return this.tasksService.createTask(createTaskDto, user);
     }
 
     @Put('/:id')
-    update(@Param('id') id: number, @Body() updateTaskDto: UpdateTaskDto): Promise<Task> {
-        return this.tasksService.updateTask(id, updateTaskDto);
+    update(
+        @Param('id') id: number,
+        @Body() updateTaskDto: UpdateTaskDto,
+        @GetUser() user: User
+    ): Promise<Task> {
+        return this.tasksService.updateTask(id, updateTaskDto, user);
     }
 
     @Delete('/:id')
-    async delete(@Param('id') id: number): Promise<string> {
-        const isDeleted = await this.tasksService.deleteTask(id);
+    async delete(
+        @Param('id') id: number,
+        @GetUser() user: User
+    ): Promise<string> {
+        const isDeleted = await this.tasksService.deleteTask(id, user);
 
         if (!isDeleted)
             throw new UnprocessableEntityException(`Unable to delete task with ID - ${id}.`);

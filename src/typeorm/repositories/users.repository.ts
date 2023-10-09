@@ -2,10 +2,9 @@ import { Injectable, BadRequestException } from "@nestjs/common";
 import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
-import { User } from 'src/typeorm/entities/user.entity';
-import { AuthCredentialsDto } from "src/auth/dto/auth-credentials.dto";
-import { LoginCredentialsDto } from "src/auth/dto/login-credentials.dto";
-
+import { User } from '../../typeorm/entities/user.entity';
+import { AuthCredentialsDto } from "../../auth/dto/auth-credentials.dto";
+import { LoginCredentialsDto } from "../../auth/dto/login-credentials.dto";
 
 @Injectable()
 export class UsersRepository extends Repository<User> {

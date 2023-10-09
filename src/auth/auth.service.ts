@@ -8,10 +8,9 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt/dist';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { User } from 'src/typeorm/entities/user.entity';
-import { UsersRepository } from 'src/typeorm/repositories/users.repository';
+import { UsersRepository } from '../typeorm/repositories/users.repository';
 
-import { DbErrorCodes } from 'src/models/db-error-codes';
+import { DbErrorCodes } from '../models/db-error-codes';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { LoginCredentialsDto } from './dto/login-credentials.dto';
 import { JwtPayload } from './dto/jwt-payload.interface';
