@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 import { AuthModule } from './auth/auth.module';
 import { TasksModule } from './tasks/tasks.module';
@@ -10,6 +11,10 @@ import { configValidateSchema } from './config-validation.schema';
 	imports: [
 		AuthModule,
 		TasksModule,
+		ThrottlerModule.forRoot([{
+			ttl: 10 * 1000,
+			limit: 10,
+		}]),
 		ConfigModule.forRoot({
 			envFilePath: [
 				`.env.stage.${process.env.STAGE}`

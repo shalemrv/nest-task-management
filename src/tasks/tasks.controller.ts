@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UnprocessableEntityException, UseGuards, Logger } from '@nestjs/common';
+
 import { GetUser } from '../auth/get-user.decorator';
 import { TasksService } from './tasks.service';
 import { Task } from '../typeorm/entities/task.entity';
@@ -7,7 +8,7 @@ import { UpdateTaskDto } from '../tasks/dto/update-task.dto';
 import { GetTasksFilterDto } from '../tasks/dto/get-tasks-filter.dto';
 import { User } from '../typeorm/entities/user.entity';
 
-import { AuthGuard } from '@nestjs/passport'
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('tasks')
 @UseGuards(AuthGuard('jwt'))
